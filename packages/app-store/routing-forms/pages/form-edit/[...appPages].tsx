@@ -36,7 +36,6 @@ const appendArray = <T,>({
   target: T[];
   appendAt: number;
 }) => {
-  // Avoid mutating the original array
   const copyOfTarget = [...target];
   const numItemsToRemove = arrayToAppend.length;
   copyOfTarget.splice(appendAt, numItemsToRemove, ...arrayToAppend);
@@ -90,7 +89,6 @@ function Field({
 
   const handleRemoveOptions = (index: number) => {
     const updatedOptions = watchedOptions.filter((_, i) => i !== index);
-    // We can't let the user remove the last option
     if (updatedOptions.length === 0) {
       return;
     }
@@ -149,18 +147,14 @@ function Field({
     optionIndex: number;
   }) => {
     const paste = event.clipboardData.getData("text");
-    // The value being pasted could be a list of options
     const optionsBeingPasted = paste
       .split(PASTE_OPTIONS_SEPARATOR_REGEX)
       .map((optionLabel) => optionLabel.trim())
       .filter((optionLabel) => optionLabel)
       .map((optionLabel) => ({ label: optionLabel.trim(), id: uuidv4() }));
     if (optionsBeingPasted.length === 1) {
-      // If there is only one option, we would just let that option be pasted
       return;
     }
-
-    // Don't allow pasting that value, as we would update the options through state update
     event.preventDefault();
 
     const updatedOptions = appendArray({
@@ -193,10 +187,6 @@ function Field({
               label="Label"
               className="flex-grow"
               placeholder={t("this_is_what_your_users_would_see")}
-              /**
-               * This is a bit of a hack to make sure that for routerField, label is shown from there.
-               * For other fields, value property is used because it exists and would take precedence
-               */
               defaultValue={label || routerField?.label || ""}
               required
               {...hookForm.register(`${hookFieldNamespace}.label`)}
@@ -212,9 +202,6 @@ function Field({
               name={`${hookFieldNamespace}.identifier`}
               required
               placeholder={t("identifies_name_field")}
-              //This change has the same effects that already existed in relation to this field,
-              // but written in a different way.
-              // The identifier field will have the same value as the label field until it is changed
               value={identifier || routerField?.identifier || label || routerField?.label || ""}
               onChange={(e) => {
                 hookForm.setValue(`${hookFieldNamespace}.identifier`, e.target.value, { shouldDirty: true });
@@ -265,7 +252,6 @@ function Field({
               <ul ref={animationRef}>
                 {watchedOptions.map((option, index) => (
                   <li
-                    // We can't use option.id here as it is undefined and would make keys non-unique causing duplicate items
                     key={`select-option-${index}`}
                     className="group mt-2 flex items-center gap-2"
                     onPaste={(event: ClipboardEvent) =>
@@ -355,6 +341,7 @@ function Field({
   );
 }
 
+// FormEdit logic -- no unnecessary Fragment or location field logic here.
 const FormEdit = ({
   hookForm,
   form,
@@ -384,13 +371,11 @@ const FormEdit = ({
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       //@ts-ignore
       id: uuidv4(),
-      // This is same type from react-awesome-query-builder
       type: "text",
       label: "",
     });
   };
 
-  // hookForm.reset(form);
   if (!form.fields) {
     form.fields = [];
   }
